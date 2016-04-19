@@ -1,4 +1,4 @@
-/*#include <arduino.h>
+#include <arduino.h>
 #include "HC_SR04.h"    // required for sonar
 
 // left motor
@@ -64,9 +64,9 @@ void loop()
 			forward = true;
 		}
 	}
-}*/
+}
 
-
+/*
 int pwm_lf = 3;
 int pwm_lr = 2;
 int pwm_rf = 4;
@@ -496,4 +496,4 @@ while(1)
 } // end running solved
 
 } // end MazeSolve
-
+*/
