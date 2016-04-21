@@ -11,59 +11,200 @@
 #define MOTOR_RB_PIN 3
 #define MOTOR_RIGHT_PWM 6
 
-float spd = 0;
-bool forward = true;
+// maximum pwm of motor (0-255)
+#define MOTOR_SPEED_MAX 180
+#define MOTOR_SPEED_MIN 50
 
+float motorSpeedRight = 0;
+float motorSpeedLeft = 0;
+
+enum Direction
+{
+	Direction_FORWARD,
+	Direction_BACKWARD,
+	Direction_LEFT,
+	Direction_RIGHT
+};
+
+// forward function declarations
+void SetDirection(Direction dir);
+void SlowTo(float pwmSpeed, float decelerateStep);
+void AccelerateTo(float pwmSpeed, float accelerateStep);
+
+////////////////////////////////////////////////////////////////////////////////
 void setup()
 {
-	pinMode(MOTOR_LF_PIN,		OUTPUT);	// motor left forward pin
-	pinMode(MOTOR_LB_PIN,		OUTPUT);	// motor left back pin
-	pinMode(MOTOR_RF_PIN,		OUTPUT);	// motor right forward pin
-	pinMode(MOTOR_RB_PIN,		OUTPUT);	// motor right back pin
-	pinMode(MOTOR_LEFT_PWM,		OUTPUT);	// pulse width module for left motor
-	pinMode(MOTOR_RIGHT_PWM,	OUTPUT);	// pulse width module for right motor
+	Serial.begin(115200);
+
+	pinMode(MOTOR_LF_PIN, OUTPUT);	// motor left forward pin
+	pinMode(MOTOR_LB_PIN, OUTPUT);	// motor left back pin
+	pinMode(MOTOR_RF_PIN, OUTPUT);	// motor right forward pin
+	pinMode(MOTOR_RB_PIN, OUTPUT);	// motor right back pin
+	pinMode(MOTOR_LEFT_PWM, OUTPUT);	// pulse width module for left motor
+	pinMode(MOTOR_RIGHT_PWM, OUTPUT);	// pulse width module for right motor
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void loop()
 {
-	if (forward)
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_FORWARD);
+	AccelerateTo(MOTOR_SPEED_MAX, 1);
+	delay(1500);
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_RIGHT);
+	AccelerateTo(128, 1);
+	delay(500);
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_FORWARD);
+	AccelerateTo(MOTOR_SPEED_MAX, 1);
+	delay(1500);
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_RIGHT);
+	AccelerateTo(128, 1);
+	delay(500);
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_FORWARD);
+	AccelerateTo(MOTOR_SPEED_MAX, 1);
+	delay(1500);
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_RIGHT);
+	AccelerateTo(128, 1);
+	delay(500);
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_FORWARD);
+	AccelerateTo(MOTOR_SPEED_MAX, 1);
+	delay(1500);
+
+	//------
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_BACKWARD);
+	AccelerateTo(MOTOR_SPEED_MAX, 1);
+	delay(1500);
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_LEFT);
+	AccelerateTo(128, 1);
+	delay(500);
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_BACKWARD);
+	AccelerateTo(MOTOR_SPEED_MAX, 1);
+	delay(1500);
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_LEFT);
+	AccelerateTo(128, 1);
+	delay(500);
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_BACKWARD);
+	AccelerateTo(MOTOR_SPEED_MAX, 1);
+	delay(1500);
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_LEFT);
+	AccelerateTo(128, 1);
+	delay(500);
+
+	SlowTo(MOTOR_SPEED_MIN, 1);
+	SetDirection(Direction_BACKWARD);
+	AccelerateTo(MOTOR_SPEED_MAX, 1);
+	delay(1500);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void SetDirection(Direction dir)
+{
+	switch (dir)
 	{
+	case Direction_FORWARD:
 		digitalWrite(MOTOR_LF_PIN, HIGH);
 		digitalWrite(MOTOR_LB_PIN, LOW);
 		digitalWrite(MOTOR_RF_PIN, HIGH);
 		digitalWrite(MOTOR_RB_PIN, LOW);
-		analogWrite(MOTOR_LEFT_PWM, spd);
-		analogWrite(MOTOR_RIGHT_PWM, spd);
-		
-		if (spd < 255)
-		{
-			spd += 0.005;
-		}
-		else
-		{
-			spd = 0;
-			forward = false;
-		}
-	}
-	else
-	{
+		break;
+	case Direction_BACKWARD:
 		digitalWrite(MOTOR_LF_PIN, LOW);
 		digitalWrite(MOTOR_LB_PIN, HIGH);
 		digitalWrite(MOTOR_RF_PIN, LOW);
 		digitalWrite(MOTOR_RB_PIN, HIGH);
-		analogWrite(MOTOR_LEFT_PWM, spd);
-		analogWrite(MOTOR_RIGHT_PWM, spd);
-
-		if (spd < 255)
-		{
-			spd += 0.005;
-		}
-		else
-		{
-			spd = 0;
-			forward = true;
-		}
+		break;
+	case Direction_LEFT:
+		digitalWrite(MOTOR_LF_PIN, LOW);
+		digitalWrite(MOTOR_LB_PIN, HIGH);
+		digitalWrite(MOTOR_RF_PIN, HIGH);
+		digitalWrite(MOTOR_RB_PIN, LOW);
+		break;
+	case Direction_RIGHT:
+		digitalWrite(MOTOR_LF_PIN, HIGH);
+		digitalWrite(MOTOR_LB_PIN, LOW);
+		digitalWrite(MOTOR_RF_PIN, LOW);
+		digitalWrite(MOTOR_RB_PIN, HIGH);
+		break;
+	default:
+		break;
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void SlowTo(float pwmSpeed, float decelerateStep)
+{
+	while (motorSpeedLeft > pwmSpeed && motorSpeedRight > pwmSpeed)
+	{
+		motorSpeedLeft -= decelerateStep;
+		if (motorSpeedLeft < pwmSpeed)
+			motorSpeedLeft = pwmSpeed;
+
+		motorSpeedRight -= decelerateStep;
+		if (motorSpeedRight < pwmSpeed)
+			motorSpeedRight = pwmSpeed;
+
+		analogWrite(MOTOR_LEFT_PWM, motorSpeedLeft);
+		analogWrite(MOTOR_RIGHT_PWM, motorSpeedRight);
+	}
+
+	motorSpeedLeft = pwmSpeed;
+	motorSpeedRight = pwmSpeed;
+
+	analogWrite(MOTOR_LEFT_PWM, motorSpeedLeft);
+	analogWrite(MOTOR_RIGHT_PWM, motorSpeedRight);
+
+	digitalWrite(MOTOR_LF_PIN, LOW);
+	digitalWrite(MOTOR_LB_PIN, LOW);
+	digitalWrite(MOTOR_RF_PIN, LOW);
+	digitalWrite(MOTOR_RB_PIN, LOW);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void AccelerateTo(float pwmSpeed, float accelerateStep)
+{
+	while (motorSpeedLeft < pwmSpeed && motorSpeedRight < pwmSpeed)
+	{
+		motorSpeedLeft += accelerateStep;
+		if (motorSpeedLeft > pwmSpeed)
+			motorSpeedLeft = pwmSpeed;
+
+		motorSpeedRight += accelerateStep;
+		if (motorSpeedRight > pwmSpeed)
+			motorSpeedRight = pwmSpeed;
+
+		analogWrite(MOTOR_LEFT_PWM, motorSpeedLeft);
+		analogWrite(MOTOR_RIGHT_PWM, motorSpeedRight);
+	}
+
+	motorSpeedLeft = pwmSpeed;
+	motorSpeedRight = pwmSpeed;
+
+	analogWrite(MOTOR_LEFT_PWM, motorSpeedLeft);
+	analogWrite(MOTOR_RIGHT_PWM, motorSpeedRight);
 }
 
 /*
@@ -97,7 +238,7 @@ int motorspeed=0;
 //  'R' for right
 //  'S' for straight (going straight through an intersection)
 //  'B' for back (U-turn)
-// You should check to make sure that the path_length of your 
+// You should check to make sure that the path_length of your
 // maze design does not exceed the bounds of the array.
 char path[100] = "";
 unsigned char path_length = 0; // the length of the path
@@ -112,8 +253,8 @@ pinMode(pwm_rr, OUTPUT);
 analogWrite(pwm_lf, 0);  //set both motors to stop at (100/255 = 39)% duty cycle (slow)
 analogWrite(pwm_rf, 0);
 
-//Serial.begin(115200);  
-Serial.begin(9600); 
+//Serial.begin(115200);
+Serial.begin(9600);
 
 //calibrateSensor();
 
@@ -181,11 +322,11 @@ while(1)
 	PV = kp * error + kd * (error - lastError);
 	lastError = error;
 
-	//this codes limits the PV (motor speed pwm value)  
+	//this codes limits the PV (motor speed pwm value)
 	// limit PV to 55
 	if (PV > 55)
 	{
-	
+
 	PV = 55;
 	}
 
@@ -193,7 +334,7 @@ while(1)
 	{
 	PV = -55;
 	}
-	
+
 	m1Speed = 200 + PV;
 	m2Speed = 200 - PV;
 
@@ -216,12 +357,12 @@ while(1)
 	return;
 	}
 
-} 
+}
 
-} // end follow_line  
+} // end follow_line
 
 
-	
+
 // Turns to the sent variable of
 // 'L' (left), 'R' (right), 'S' (straight), or 'B' (back)
 // Tune 'turnSpeed' at declaration
@@ -230,11 +371,11 @@ void turn(char dir)
 switch(dir)
 {
 	// Turn left 90deg
-	case 'L':    
+	case 'L':
 	analogWrite(pwm_lr, turnSpeed);
 	analogWrite(pwm_rf, turnSpeed);
-	
-	wall_angle = get_wall_angle();     
+
+	wall_angle = get_wall_angle();
 	while (wall_angle > 10)  // turn left until near parallel to wall
 	{
 		wall_angle = get_wall_angle();
@@ -242,72 +383,72 @@ switch(dir)
 
 	// slow down speed
 	analogWrite(pwm_lr, turnSpeedSlow);
-	analogWrite(pwm_rf, turnSpeedSlow); 
-	
+	analogWrite(pwm_rf, turnSpeedSlow);
+
 	while (wall_angle > 5)   // turn slight left
 	{
 		wall_angle = get_wall_angle();
 	}
-	
+
 	// stop both motors
 	analogWrite(pwm_rf, 0);  // stop right motor first to better avoid over run
-	analogWrite(pwm_lr, 0);  
+	analogWrite(pwm_lr, 0);
 	break;
-	
+
 	// Turn right 90deg
-	case 'R':        
+	case 'R':
 	analogWrite(pwm_lf, turnSpeed);
 	analogWrite(pwm_rr, turnSpeed);
-		
+
 	wall_angle = get_wall_angle();
 	while (wall_angle < -10)  // turn left until near parallel to wall
 	{
 		wall_angle = get_wall_angle();
 	}
-	
+
 	// slow down speed
 	analogWrite(pwm_lf, turnSpeedSlow);
-	analogWrite(pwm_rr, turnSpeedSlow); 
-	
+	analogWrite(pwm_rr, turnSpeedSlow);
+
 	while (wall_angle < -5))   // turn slight right
 	{
 		wall_angle = get_wall_angle();
 	}
-	
+
 	// stop both motors
-	analogWrite(pwm_lf, 0);  
-	analogWrite(pwm_rr, 0);      
+	analogWrite(pwm_lf, 0);
+	analogWrite(pwm_rr, 0);
 	break;
-	
+
 	// Turn right 180deg to go back
-	case 'B':		
+	case 'B':
 
 	// IAN: I'm not sure this case is needed. Isn't this just 2 right turns?
 	analogWrite(pwm_rr, turnSpeed);
 	analogWrite(pwm_lf, turnSpeed);
-	
+
 	wall_angle = get_wall_angle();
 	wall_distance = get_wall_distance();
-	
+
 	while (wall_angle < -10)  // turn left until near parallel to wall
 	{
 		wall_angle = get_wall_angle();
 		wall_distance = get_wall_distance();
 	}
-	
+
 	// slow down speed
 	analogWrite(pwm_rr, turnSpeedSlow);
-	analogWrite(pwm_lr, turnSpeedSlow); 
-	
+	analogWrite(pwm_lr, turnSpeedSlow);
+
 	// find center
 	while (line_position < 3250)  // tune - wait for line position to find near center
 	{
 		line_position = qtrrc.readLine(sensorValues);
 	}
-	
+
 	// stop both motors
-	analogWrite(pwm_rr, 0);  
-	analogWrite(pwm_lr, 0);           
+	analogWrite(pwm_rr, 0);
+	analogWrite(pwm_lr, 0);
 	break;
 
 	// Straight ahead
@@ -379,18 +520,18 @@ void MazeSolve()
 // Loop until we have solved the maze.
 while(1)
 {
-	// FIRST MAIN LOOP BODY  
+	// FIRST MAIN LOOP BODY
 	follow_wall();
 
 	// Drive straight a bit.  This helps us in case we entered the
 	// intersection at an angle.
 	analogWrite(pwm_lf, 200);
-	analogWrite(pwm_rf, 200);   
-	delay(25); 
+	analogWrite(pwm_rf, 200);
+	delay(25);
 
 	// These variables record whether the robot has seen a line to the
 	// left, straight ahead, and right, whil examining the current
-	// intersection.	
+	// intersection.
 	wall_angle = get_wall_angle();
 	unsigned char dir = "S";
 	if (wall_angle > 20){
@@ -403,8 +544,8 @@ while(1)
 	// Drive straight a bit more - this is enough to line up our
 	// wheels with the intersection.
 	analogWrite(pwm_lf, 200);
-	analogWrite(pwm_rf, 200);   
-	delay(drivePastDelay); 
+	analogWrite(pwm_rf, 200);
+	delay(drivePastDelay);
 
 	// Check for the ending spot.
 	// If all six middle sensors are on dark black, we have
@@ -466,13 +607,13 @@ while(1)
 	int i;
 	for(i=0;i<path_length;i++)
 	{
-	// SECOND MAIN LOOP BODY  
+	// SECOND MAIN LOOP BODY
 	follow_line();
 
 	// drive past intersection slightly slower and timed delay to align wheels on line
-	digitalWrite(dir_a, LOW);  
+	digitalWrite(dir_a, LOW);
 	analogWrite(pwm_a, 200);
-	digitalWrite(dir_b, LOW);  
+	digitalWrite(dir_b, LOW);
 	analogWrite(pwm_b, 200);
 	delay(drivePastDelay); // tune time to allow wheels to position for correct turning
 
@@ -485,13 +626,13 @@ while(1)
 	follow_line();
 
 	// drive past intersection slightly slower and timed delay to align wheels on line
-	digitalWrite(dir_a, LOW);  
+	digitalWrite(dir_a, LOW);
 	analogWrite(pwm_a, 200);
-	digitalWrite(dir_b, LOW);  
+	digitalWrite(dir_b, LOW);
 	analogWrite(pwm_b, 200);
 	delay(drivePastDelay); // tune time to allow wheels to position for correct turning
-		
-	// Now we should be at the finish!  Now move the robot again and it will re-run this loop with the solution again.  
+
+	// Now we should be at the finish!  Now move the robot again and it will re-run this loop with the solution again.
 
 } // end running solved
 
