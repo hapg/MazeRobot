@@ -11,6 +11,8 @@
 #define SPEED_OF_SOUND_US_PER_CM 29.4117647   // 1 / (340m/s * 100cm/1m * 0.000001s/us)
 #define SPEED_OF_SOUND_US_PER_IN 74.7058420   // 1 / (340m/s * 39.3701in/1m * 0.000001s/us)
 
+#define MIN_TRIGGER_TIME 10
+
 HC_SR04::HC_SR04(int trigPin, int echoPin)
 {
 	m_trigPin = trigPin;
@@ -33,7 +35,7 @@ float HC_SR04::PulseForInches()
 
 	// trigger pulse for 10 microseconds (minimum amount)
 	digitalWrite(m_trigPin, HIGH);
-	delayMicroseconds(10);
+	delayMicroseconds(MIN_TRIGGER_TIME);
 
 	// turn off trigger
 	digitalWrite(m_trigPin, LOW);
@@ -50,11 +52,10 @@ float HC_SR04::PulseForCentimeters()
 
 	// trigger pulse for 10 microseconds (minimum amount)
 	digitalWrite(m_trigPin, HIGH);
-	delayMicroseconds(10);
+	delayMicroseconds(MIN_TRIGGER_TIME);
 
 	// turn off trigger
 	digitalWrite(m_trigPin, LOW);
-	delayMicroseconds(2);
 
 	// listen for pulse
 	distance = pulseIn(m_echoPin, HIGH);
