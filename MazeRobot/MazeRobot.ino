@@ -15,6 +15,12 @@
 #define MOTOR_SPEED_MAX 180
 #define MOTOR_SPEED_MIN 50
 
+// sonar pins
+#define SONAR_LEFT_TRIGGER_PIN 10
+#define SONAR_LEFT_ECHO_PIN 11
+#define SONAR_RIGHT_TRIGGER_PIN 8
+#define SONAR_RIGHT_ECHO_PIN 9
+
 float motorSpeedRight = 0;
 float motorSpeedLeft = 0;
 
@@ -26,6 +32,10 @@ enum Direction
 	Direction_RIGHT
 };
 
+// sonar objects
+HC_SR04 sonarLeft = HC_SR04(SONAR_LEFT_TRIGGER_PIN, SONAR_LEFT_ECHO_PIN);
+HC_SR04 sonarRight = HC_SR04(SONAR_RIGHT_TRIGGER_PIN, SONAR_RIGHT_ECHO_PIN);
+
 // forward function declarations
 void SetDirection(Direction dir);
 void SlowTo(float pwmSpeed, float decelerateStep);
@@ -34,12 +44,13 @@ void AccelerateTo(float pwmSpeed, float accelerateStep);
 ////////////////////////////////////////////////////////////////////////////////
 void setup()
 {
-	Serial.begin(115200);
+	Serial.begin(9600);
+//	Serial.begin(115200);
 
-	pinMode(MOTOR_LF_PIN, OUTPUT);	// motor left forward pin
-	pinMode(MOTOR_LB_PIN, OUTPUT);	// motor left back pin
-	pinMode(MOTOR_RF_PIN, OUTPUT);	// motor right forward pin
-	pinMode(MOTOR_RB_PIN, OUTPUT);	// motor right back pin
+	pinMode(MOTOR_LF_PIN, OUTPUT);		// motor left forward pin
+	pinMode(MOTOR_LB_PIN, OUTPUT);		// motor left back pin
+	pinMode(MOTOR_RF_PIN, OUTPUT);		// motor right forward pin
+	pinMode(MOTOR_RB_PIN, OUTPUT);		// motor right back pin
 	pinMode(MOTOR_LEFT_PWM, OUTPUT);	// pulse width module for left motor
 	pinMode(MOTOR_RIGHT_PWM, OUTPUT);	// pulse width module for right motor
 }
@@ -47,6 +58,15 @@ void setup()
 ////////////////////////////////////////////////////////////////////////////////
 void loop()
 {
+	float leftSonarIn = sonarLeft.PulseForInches();
+	float rightSonarIn = sonarRight.PulseForCentimeters();
+
+	Serial.print("Left Sonar:  ");
+	Serial.println(leftSonarIn);
+	Serial.print("Right Sonar: ");
+	Serial.println(rightSonarIn);
+
+	/*
 	SlowTo(MOTOR_SPEED_MIN, 1);
 	SetDirection(Direction_FORWARD);
 	AccelerateTo(MOTOR_SPEED_MAX, 1);
@@ -118,6 +138,7 @@ void loop()
 	SetDirection(Direction_BACKWARD);
 	AccelerateTo(MOTOR_SPEED_MAX, 1);
 	delay(1500);
+	*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////
