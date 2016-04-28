@@ -10,16 +10,16 @@
 
 class HC_SR04
 {
-	public:		
-		HC_SR04(int trigPin, int echoPin);
-		~HC_SR04();
+public:
+	HC_SR04(int trigPin, int echoPin);
+	~HC_SR04();
 
-		float PulseForInches();
-		float PulseForCentimeters();
+	float PulseForInches();			// returns inches from object to sonar
+	float PulseForCentimeters();	// returns centimeters from object to sonar
 
-	private:
-		int m_trigPin;
-		int m_echoPin;
+private:
+	int m_trigPin;					// HC_SR04 Trig pin
+	int m_echoPin;					// HC_SR04 Echo pin
 };
 
 #endif  // HC_SR04_H
