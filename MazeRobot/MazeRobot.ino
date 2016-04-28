@@ -1,232 +1,30 @@
 #include <arduino.h>
-#include "HC_SR04.h"    // required for sonar
+#include "Robot.h"
 
-// left motor
-#define MOTOR_LF_PIN 4
-#define MOTOR_LB_PIN 5
-#define MOTOR_LEFT_PWM 7
-
-// right motor
-#define MOTOR_RF_PIN 2
-#define MOTOR_RB_PIN 3
-#define MOTOR_RIGHT_PWM 6
-
-// maximum pwm of motor (0-255)
-#define MOTOR_SPEED_MAX 180
-#define MOTOR_SPEED_MIN 50
-
-// sonar pins
-#define SONAR_LEFT_TRIGGER_PIN 10
-#define SONAR_LEFT_ECHO_PIN 11
-#define SONAR_RIGHT_TRIGGER_PIN 8
-#define SONAR_RIGHT_ECHO_PIN 9
-
-float motorSpeedRight = 0;
-float motorSpeedLeft = 0;
-
-enum Direction
-{
-	Direction_FORWARD,
-	Direction_BACKWARD,
-	Direction_LEFT,
-	Direction_RIGHT
-};
-
-// sonar objects
-HC_SR04 sonarLeft = HC_SR04(SONAR_LEFT_TRIGGER_PIN, SONAR_LEFT_ECHO_PIN);
-HC_SR04 sonarRight = HC_SR04(SONAR_RIGHT_TRIGGER_PIN, SONAR_RIGHT_ECHO_PIN);
-
-// forward function declarations
-void SetDirection(Direction dir);
-void SlowTo(float pwmSpeed, float decelerateStep);
-void AccelerateTo(float pwmSpeed, float accelerateStep);
+Robot* robot;
 
 ////////////////////////////////////////////////////////////////////////////////
 void setup()
 {
 	Serial.begin(9600);
-//	Serial.begin(115200);
 
-	pinMode(MOTOR_LF_PIN, OUTPUT);		// motor left forward pin
-	pinMode(MOTOR_LB_PIN, OUTPUT);		// motor left back pin
-	pinMode(MOTOR_RF_PIN, OUTPUT);		// motor right forward pin
-	pinMode(MOTOR_RB_PIN, OUTPUT);		// motor right back pin
-	pinMode(MOTOR_LEFT_PWM, OUTPUT);	// pulse width module for left motor
-	pinMode(MOTOR_RIGHT_PWM, OUTPUT);	// pulse width module for right motor
+	robot = new Robot();
+	robot->InitializeRobot();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void loop()
 {
-	float leftSonarIn = sonarLeft.PulseForInches();
-	float rightSonarIn = sonarRight.PulseForCentimeters();
+	Robot::State state = robot->GetRobotState();
 
-	Serial.print("Left Sonar:  ");
-	Serial.println(leftSonarIn);
-	Serial.print("Right Sonar: ");
-	Serial.println(rightSonarIn);
-
-	/*
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_FORWARD);
-	AccelerateTo(MOTOR_SPEED_MAX, 1);
-	delay(1500);
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_RIGHT);
-	AccelerateTo(128, 1);
-	delay(500);
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_FORWARD);
-	AccelerateTo(MOTOR_SPEED_MAX, 1);
-	delay(1500);
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_RIGHT);
-	AccelerateTo(128, 1);
-	delay(500);
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_FORWARD);
-	AccelerateTo(MOTOR_SPEED_MAX, 1);
-	delay(1500);
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_RIGHT);
-	AccelerateTo(128, 1);
-	delay(500);
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_FORWARD);
-	AccelerateTo(MOTOR_SPEED_MAX, 1);
-	delay(1500);
-
-	//------
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_BACKWARD);
-	AccelerateTo(MOTOR_SPEED_MAX, 1);
-	delay(1500);
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_LEFT);
-	AccelerateTo(128, 1);
-	delay(500);
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_BACKWARD);
-	AccelerateTo(MOTOR_SPEED_MAX, 1);
-	delay(1500);
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_LEFT);
-	AccelerateTo(128, 1);
-	delay(500);
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_BACKWARD);
-	AccelerateTo(MOTOR_SPEED_MAX, 1);
-	delay(1500);
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_LEFT);
-	AccelerateTo(128, 1);
-	delay(500);
-
-	SlowTo(MOTOR_SPEED_MIN, 1);
-	SetDirection(Direction_BACKWARD);
-	AccelerateTo(MOTOR_SPEED_MAX, 1);
-	delay(1500);
-	*/
-}
-
-////////////////////////////////////////////////////////////////////////////////
-void SetDirection(Direction dir)
-{
-	switch (dir)
+	while (state != Robot::State_FINISHED)
 	{
-	case Direction_FORWARD:
-		digitalWrite(MOTOR_LF_PIN, HIGH);
-		digitalWrite(MOTOR_LB_PIN, LOW);
-		digitalWrite(MOTOR_RF_PIN, HIGH);
-		digitalWrite(MOTOR_RB_PIN, LOW);
-		break;
-	case Direction_BACKWARD:
-		digitalWrite(MOTOR_LF_PIN, LOW);
-		digitalWrite(MOTOR_LB_PIN, HIGH);
-		digitalWrite(MOTOR_RF_PIN, LOW);
-		digitalWrite(MOTOR_RB_PIN, HIGH);
-		break;
-	case Direction_LEFT:
-		digitalWrite(MOTOR_LF_PIN, LOW);
-		digitalWrite(MOTOR_LB_PIN, HIGH);
-		digitalWrite(MOTOR_RF_PIN, HIGH);
-		digitalWrite(MOTOR_RB_PIN, LOW);
-		break;
-	case Direction_RIGHT:
-		digitalWrite(MOTOR_LF_PIN, HIGH);
-		digitalWrite(MOTOR_LB_PIN, LOW);
-		digitalWrite(MOTOR_RF_PIN, LOW);
-		digitalWrite(MOTOR_RB_PIN, HIGH);
-		break;
-	default:
-		break;
-	}
-}
-
-////////////////////////////////////////////////////////////////////////////////
-void SlowTo(float pwmSpeed, float decelerateStep)
-{
-	while (motorSpeedLeft > pwmSpeed && motorSpeedRight > pwmSpeed)
-	{
-		motorSpeedLeft -= decelerateStep;
-		if (motorSpeedLeft < pwmSpeed)
-			motorSpeedLeft = pwmSpeed;
-
-		motorSpeedRight -= decelerateStep;
-		if (motorSpeedRight < pwmSpeed)
-			motorSpeedRight = pwmSpeed;
-
-		analogWrite(MOTOR_LEFT_PWM, motorSpeedLeft);
-		analogWrite(MOTOR_RIGHT_PWM, motorSpeedRight);
+		robot->UpdateRobot();
 	}
 
-	motorSpeedLeft = pwmSpeed;
-	motorSpeedRight = pwmSpeed;
-
-	analogWrite(MOTOR_LEFT_PWM, motorSpeedLeft);
-	analogWrite(MOTOR_RIGHT_PWM, motorSpeedRight);
-
-	digitalWrite(MOTOR_LF_PIN, LOW);
-	digitalWrite(MOTOR_LB_PIN, LOW);
-	digitalWrite(MOTOR_RF_PIN, LOW);
-	digitalWrite(MOTOR_RB_PIN, LOW);
+	delete robot;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-void AccelerateTo(float pwmSpeed, float accelerateStep)
-{
-	while (motorSpeedLeft < pwmSpeed && motorSpeedRight < pwmSpeed)
-	{
-		motorSpeedLeft += accelerateStep;
-		if (motorSpeedLeft > pwmSpeed)
-			motorSpeedLeft = pwmSpeed;
-
-		motorSpeedRight += accelerateStep;
-		if (motorSpeedRight > pwmSpeed)
-			motorSpeedRight = pwmSpeed;
-
-		analogWrite(MOTOR_LEFT_PWM, motorSpeedLeft);
-		analogWrite(MOTOR_RIGHT_PWM, motorSpeedRight);
-	}
-
-	motorSpeedLeft = pwmSpeed;
-	motorSpeedRight = pwmSpeed;
-
-	analogWrite(MOTOR_LEFT_PWM, motorSpeedLeft);
-	analogWrite(MOTOR_RIGHT_PWM, motorSpeedRight);
-}
 
 /*
 int pwm_lf = 3;
