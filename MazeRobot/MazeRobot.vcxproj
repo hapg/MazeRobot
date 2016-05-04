@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{5A28EB4D-043C-4161-96A1-63743F835B4D}</ProjectGuid>
+    <ProjectGuid>{5141A2C0-6006-49BA-B0F1-CC88310DBD6F}</ProjectGuid>
     <RootNamespace>MazeRobot</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
