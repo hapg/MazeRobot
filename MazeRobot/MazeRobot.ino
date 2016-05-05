@@ -15,9 +15,9 @@ void setup()
 ////////////////////////////////////////////////////////////////////////////////
 void loop()
 {
-	Robot::State state = robot->GetRobotState();
+	Robot::State state;
 
-	while (state != Robot::State_FINISHED)
+	while (robot->GetRobotState() != Robot::State_FINISHED)
 	{
 		robot->UpdateRobot();
 	}
