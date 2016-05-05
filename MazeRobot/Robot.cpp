@@ -51,8 +51,12 @@ void Robot::InitializeRobot()
 	m_sonarLeft = new HC_SR04(SONAR_LEFT_TRIGGER_PIN, SONAR_LEFT_ECHO_PIN);
 	m_sonarRight = new HC_SR04(SONAR_RIGHT_TRIGGER_PIN, SONAR_RIGHT_ECHO_PIN);
 
-	m_motorSpeedRight = 0;
-	m_motorSpeedLeft = 0;
+	m_motorLeftPwm = 0.0f;
+	m_motorRightPwm = 0.0f;
+	m_motorLeftPwmTarget = 0.0f;
+	m_motorRightPwmTarget = 0.0f;
+	m_motorLeftStep = 0.0f;
+	m_motorRightStep = 0.0f;
 
 	m_robotState = State_READY;
 }
@@ -65,7 +69,7 @@ void Robot::UpdateRobot()
 		m_robotState = State_SOLVING;
 		break;
 	case Robot::State_SOLVING:
-		SolvingUpdate();
+		SolveMazeUpdate();
 		break;
 	case Robot::State_FINISHED:
 		break;
@@ -74,15 +78,17 @@ void Robot::UpdateRobot()
 	}
 }
 
-void Robot::SolvingUpdate()
+void Robot::SolveMazeUpdate()
 {
 	float leftSonarIn = m_sonarLeft->PulseForInches();
-	float rightSonarIn = m_sonarRight->PulseForCentimeters();
+	float rightSonarIn = m_sonarRight->PulseForInches();
 
 	Serial.print("Left Sonar:  ");
 	Serial.println(leftSonarIn);
 	Serial.print("Right Sonar: ");
 	Serial.println(rightSonarIn);
+
+	UpateMotorSpeeds();
 
 	SlowTo(MOTOR_SPEED_MIN, 1);
 	SetDirection(Direction_FORWARD);
@@ -191,54 +197,69 @@ void Robot::SetDirection(Direction dir)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+void Robot::SetLeftMotorPwmTarget(float pwmSpeed, float accelerationStep /*= 0.01f*/)
+{
+	if (pwmSpeed > MOTOR_SPEED_MAX)
+		m_motorLeftPwmTarget = MOTOR_SPEED_MAX;
+	else if (pwmSpeed < MOTOR_SPEED_MIN)
+		m_motorLeftPwmTarget = MOTOR_SPEED_MIN;
+	else
+		m_motorLeftPwmTarget = pwmSpeed;
+	
+	// force step to be a positive number
+	accelerationStep < 0.0f ? m_motorLeftStep = -accelerationStep : m_motorLeftStep = accelerationStep;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void Robot::SetRightMotorPwmTarget(float pwmSpeed, float accelerationStep /*= 0.01f*/)
+{
+	if (pwmSpeed > MOTOR_SPEED_MAX)
+		m_motorRightPwmTarget = MOTOR_SPEED_MAX;
+	else if (pwmSpeed < MOTOR_SPEED_MIN)
+		m_motorRightPwmTarget = MOTOR_SPEED_MIN;
+	else
+		m_motorRightPwmTarget = pwmSpeed;
+
+	// force step to be a positive number
+	accelerationStep < 0.0f ? m_motorRightStep = -accelerationStep : m_motorRightStep = accelerationStep;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 void Robot::SlowTo(float pwmSpeed, float decelerateStep)
 {
-	while (m_motorSpeedLeft > pwmSpeed && m_motorSpeedRight > pwmSpeed)
-	{
-		m_motorSpeedLeft -= decelerateStep;
-		if (m_motorSpeedLeft < pwmSpeed)
-			m_motorSpeedLeft = pwmSpeed;
-
-		m_motorSpeedRight -= decelerateStep;
-		if (m_motorSpeedRight < pwmSpeed)
-			m_motorSpeedRight = pwmSpeed;
-
-		analogWrite(MOTOR_LEFT_PWM, m_motorSpeedLeft);
-		analogWrite(MOTOR_RIGHT_PWM, m_motorSpeedRight);
-	}
-
-	m_motorSpeedLeft = pwmSpeed;
-	m_motorSpeedRight = pwmSpeed;
-
-	analogWrite(MOTOR_LEFT_PWM, m_motorSpeedLeft);
-	analogWrite(MOTOR_RIGHT_PWM, m_motorSpeedRight);
-
-	digitalWrite(MOTOR_LF_PIN, LOW);
-	digitalWrite(MOTOR_LB_PIN, LOW);
-	digitalWrite(MOTOR_RF_PIN, LOW);
-	digitalWrite(MOTOR_RB_PIN, LOW);
+	SetLeftMotorPwmTarget(pwmSpeed, decelerateStep);
+	SetRightMotorPwmTarget(pwmSpeed, decelerateStep);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void Robot::AccelerateTo(float pwmSpeed, float accelerateStep)
 {
-	while (m_motorSpeedLeft < pwmSpeed && m_motorSpeedRight < pwmSpeed)
+	SetLeftMotorPwmTarget(pwmSpeed, accelerateStep);
+	SetRightMotorPwmTarget(pwmSpeed, accelerateStep);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void Robot::UpateMotorSpeeds()
+{
+	// left motor
+	if (m_motorLeftStep > 0.0f)
 	{
-		m_motorSpeedLeft += accelerateStep;
-		if (m_motorSpeedLeft > pwmSpeed)
-			m_motorSpeedLeft = pwmSpeed;
-
-		m_motorSpeedRight += accelerateStep;
-		if (m_motorSpeedRight > pwmSpeed)
-			m_motorSpeedRight = pwmSpeed;
-
-		analogWrite(MOTOR_LEFT_PWM, m_motorSpeedLeft);
-		analogWrite(MOTOR_RIGHT_PWM, m_motorSpeedRight);
+		if (m_motorLeftPwm < m_motorLeftPwmTarget)
+			m_motorLeftPwm += m_motorLeftStep;
+		else if (m_motorLeftPwm > m_motorLeftPwmTarget)
+			m_motorLeftPwm -= m_motorLeftStep;
+		else
+			m_motorLeftStep = 0.0f;
 	}
 
-	m_motorSpeedLeft = pwmSpeed;
-	m_motorSpeedRight = pwmSpeed;
-
-	analogWrite(MOTOR_LEFT_PWM, m_motorSpeedLeft);
-	analogWrite(MOTOR_RIGHT_PWM, m_motorSpeedRight);
+	// right motor
+	if (m_motorRightStep > 0.0f)
+	{
+		if (m_motorRightPwm < m_motorRightPwmTarget)
+			m_motorRightPwm += m_motorRightStep;
+		else if (m_motorRightPwm > m_motorRightPwmTarget)
+			m_motorRightPwm -= m_motorRightStep;
+		else
+			m_motorRightStep = 0.0f;
+	}
 }
